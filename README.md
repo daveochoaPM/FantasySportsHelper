@@ -1,55 +1,73 @@
 
-# Fantasy NHL Helper — Production Ready
+# Fantasy Sports Helper — Production Ready
 
-Serverless Azure project pulling Yahoo Fantasy NHL data, joining NHL schedules, computing league-specific guidance, and delivering via Gmail.
+Serverless Azure project pulling Yahoo Fantasy NHL data, joining NHL schedules, computing league-specific guidance, and delivering via Gmail with a comprehensive admin interface.
 
 ## Features
 - **League-Aware Guidance**: Recommendations based on your league's scoring settings (G, A, SOG, HIT, BLK, etc.)
 - **Schedule Intelligence**: Back-to-back game detection and game volume analysis
-- **OAuth Integration**: Yahoo Fantasy and Gmail authentication
-- **Admin Interface**: Test runs with email override for development
+- **OAuth Integration**: Yahoo Fantasy and Google Gmail authentication
+- **Admin Dashboard**: Complete web interface for managing leagues, managers, and testing
 - **Automated Delivery**: Nightly job orchestrates sync → guidance → email
 - **Extensible Design**: Ready for ESPN/NFL expansion
+- **Production Security**: Azure AD authentication with role-based access control
 
 ## Quick Start
 
-### 1. Setup OAuth Applications
+### 1. Deploy to Azure (Automated)
+```bash
+# Windows PowerShell
+.\deploy.ps1
+
+# Linux/Mac
+./deploy.sh
+```
+
+### 2. Configure OAuth Applications
 - **Yahoo**: Create app at https://developer.yahoo.com/fantasysports/
 - **Google**: Create project at https://console.developers.google.com/
-- Update `local.settings.json` with client IDs and secrets
+- Set redirect URIs to your deployed Function App URLs
 
-### 2. Authentication Flow
+### 3. Access Admin Dashboard
+1. Navigate to your Static Web App admin URL
+2. Sign in with Azure AD (admin role required)
+3. Use the web interface to:
+   - Add leagues and managers
+   - Test the system with email override
+   - Monitor guidance runs
+
+### 4. Authentication Flow
 ```bash
 # Authenticate with Yahoo
-curl http://localhost:7071/api/auth/yahoo/login
+curl https://your-function-app.azurewebsites.net/api/auth/yahoo/login
 
 # Authenticate with Google  
-curl http://localhost:7071/api/auth/google/login
+curl https://your-function-app.azurewebsites.net/api/auth/google/login
 ```
 
-### 3. Configure League
-```bash
-# Add league
-curl -X POST http://localhost:7071/api/admin/league \
-  -H "Content-Type: application/json" \
-  -d '{"leagueId": "123456", "sport": "nhl", "provider": "yahoo"}'
+## Admin Dashboard
 
-# Add manager email
-curl -X POST http://localhost:7071/api/admin/manager \
-  -H "Content-Type: application/json" \
-  -d '{"leagueId": "123456", "teamId": "1", "email": "manager@example.com"}'
-```
+The system includes a comprehensive web-based admin interface with:
 
-### 4. Test Run
-```bash
-# Sync league data
-curl -X POST http://localhost:7071/api/league/123456/sync
+### **Leagues Management**
+- Add new leagues with sport and provider selection
+- Sync league data (teams, rosters, scoring settings)
+- View league details and current week information
 
-# Test guidance (with email override)
-curl -X POST http://localhost:7071/api/admin/run-now \
-  -H "Content-Type: application/json" \
-  -d '{"leagueId": "123456", "teamId": "1", "emailOverride": "test@example.com"}'
-```
+### **Managers Management**
+- Map team IDs to email addresses
+- View all configured managers
+- Update manager information
+
+### **Test & Monitoring**
+- Test run functionality with email override
+- Real-time guidance generation
+- System logs and activity monitoring
+
+### **Security**
+- Azure AD authentication required
+- Role-based access control (admin role)
+- Secure OAuth token management
 
 ## API Endpoints
 
@@ -63,7 +81,7 @@ curl -X POST http://localhost:7071/api/admin/run-now \
 - `POST /api/league/{leagueId}/sync` — Sync league data and settings
 - `POST /api/league/{leagueId}/send?teamId={teamId}&week={week}` — Send guidance
 
-### Admin
+### Admin (Protected)
 - `POST /api/admin/league` — Create/update league
 - `POST /api/admin/manager` — Map team to email
 - `GET /api/admin/league/{leagueId}` — Get league summary
@@ -105,13 +123,22 @@ func start
 
 ### Azure Deployment
 
-#### Quick Start (Automated)
+#### Automated Deployment (Recommended)
 ```bash
-# Run the deployment script
-./deploy.sh  # Linux/Mac
-# or
-.\deploy.ps1  # Windows PowerShell
+# Windows PowerShell
+.\deploy.ps1
+
+# Linux/Mac  
+./deploy.sh
 ```
+
+The scripts automatically create:
+- ✅ **Resource Group**: `fantasyhelperrg`
+- ✅ **Cosmos DB**: `fantasyhelpercosmos` (serverless)
+- ✅ **Function App**: `fantasyhelperfunctions`
+- ✅ **Static Web App**: `fantasyhelperadmin` (connected to GitHub)
+- ✅ **Storage Account**: For Function App runtime
+- ✅ **Managed Identity**: Secure Cosmos DB access
 
 #### Manual Deployment
 1. **Create Azure Resources**: Cosmos DB, Function App, Static Web App
@@ -164,5 +191,20 @@ func start
 2. **Assign Roles**: Add users to `admin` role in Azure AD
 3. **Deploy**: Static Web App automatically enforces security rules
 4. **Test**: Verify unauthorized users cannot access admin functions
+
+### Cost Estimation (West US)
+- **Function App (Consumption)**: ~$5-20/month
+- **Cosmos DB (Serverless)**: ~$10-50/month
+- **Static Web App**: Free tier
+- **Storage + Monitoring**: ~$5-15/month
+- **Total**: ~$20-90/month depending on usage
+
+### Files Overview
+- `deploy.ps1` / `deploy.sh` — Automated Azure deployment scripts
+- `DEPLOYMENT.md` — Complete deployment guide
+- `admin/index.html` — Admin dashboard interface
+- `functions/` — Azure Functions (API endpoints)
+- `libs/` — API clients and utilities
+- `engine/` — Guidance computation and email templates
 
 See `PRD.md` for detailed security and fallback logic.

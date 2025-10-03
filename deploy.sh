@@ -13,14 +13,14 @@ FUNCTION_APP="fantasyhelperfunctions"
 SWA_NAME="fantasyhelperadmin"
 STORAGE_ACCOUNT="fantasyhelperstorage"
 
-echo "🚀 Starting Fantasy Sports Helper deployment to Azure..."
+echo "Starting Fantasy Sports Helper deployment to Azure..."
 
 # Step 1: Create Resource Group
-echo "📦 Creating resource group..."
+echo "Creating resource group..."
 az group create --name $RESOURCE_GROUP --location $LOCATION
 
 # Step 2: Create Cosmos DB
-echo "🗄️ Creating Cosmos DB account..."
+echo "Creating Cosmos DB account..."
 az cosmosdb create \
   --resource-group $RESOURCE_GROUP \
   --name $COSMOS_ACCOUNT \
@@ -35,7 +35,7 @@ az cosmosdb sql database create \
   --name "fantasy_helper"
 
 # Step 3: Create Storage Account
-echo "💾 Creating storage account..."
+echo "Creating storage account..."
 az storage account create \
   --resource-group $RESOURCE_GROUP \
   --name $STORAGE_ACCOUNT \
@@ -43,7 +43,7 @@ az storage account create \
   --sku Standard_LRS
 
 # Step 4: Create Function App
-echo "⚡ Creating Function App..."
+echo "Creating Function App..."
 az functionapp create \
   --resource-group $RESOURCE_GROUP \
   --consumption-plan-location $LOCATION \
@@ -55,7 +55,7 @@ az functionapp create \
   --os-type Linux
 
 # Step 5: Enable Managed Identity
-echo "🔐 Enabling managed identity..."
+echo "Enabling managed identity..."
 az functionapp identity assign \
   --resource-group $RESOURCE_GROUP \
   --name $FUNCTION_APP
@@ -67,7 +67,7 @@ PRINCIPAL_ID=$(az functionapp identity show \
   --query principalId -o tsv)
 
 # Step 6: Assign Cosmos DB Role
-echo "🔑 Assigning Cosmos DB permissions..."
+echo "Assigning Cosmos DB permissions..."
 COSMOS_ID=$(az cosmosdb show \
   --resource-group $RESOURCE_GROUP \
   --name $COSMOS_ACCOUNT \
@@ -79,7 +79,7 @@ az role assignment create \
   --scope $COSMOS_ID
 
 # Step 7: Create Static Web App
-echo "🌐 Creating Static Web App..."
+echo "Creating Static Web App..."
 az staticwebapp create \
   --name $SWA_NAME \
   --resource-group $RESOURCE_GROUP \
@@ -90,7 +90,7 @@ az staticwebapp create \
   --output-location "/admin"
 
 # Step 8: Configure Function App Settings
-echo "⚙️ Configuring Function App settings..."
+echo "Configuring Function App settings..."
 
 # Get Cosmos DB settings
 COSMOS_ENDPOINT="https://$COSMOS_ACCOUNT.documents.azure.com:443/"
@@ -111,9 +111,9 @@ az functionapp config appsettings set \
     FUNCTIONS_WORKER_RUNTIME="python" \
     WEBSITE_RUN_FROM_PACKAGE="1"
 
-echo "✅ Basic infrastructure deployed successfully!"
+echo "Basic infrastructure deployed successfully!"
 echo ""
-echo "🔧 Next steps:"
+echo "Next steps:"
 echo "1. Configure OAuth applications (Yahoo and Google)"
 echo "2. Set OAuth credentials in Function App settings:"
 echo "   az functionapp config appsettings set --resource-group $RESOURCE_GROUP --name $FUNCTION_APP --settings YAHOO_CLIENT_ID='<your-id>' YAHOO_CLIENT_SECRET='<your-secret>'"
@@ -122,14 +122,14 @@ echo "   func azure functionapp publish $FUNCTION_APP --python"
 echo "4. Create Static Web App for admin UI"
 echo "5. Configure Azure AD authentication"
 echo ""
-echo "📋 Resources created:"
+echo "Resources created:"
 echo "   - Resource Group: $RESOURCE_GROUP"
 echo "   - Cosmos DB: $COSMOS_ACCOUNT"
 echo "   - Function App: $FUNCTION_APP"
 echo "   - Storage Account: $STORAGE_ACCOUNT"
 echo "   - Static Web App: $SWA_NAME"
 echo ""
-echo "🔗 URLs:"
+echo "URLs:"
 echo "   - Function App: https://$FUNCTION_APP.azurewebsites.net"
 echo "   - Admin UI: https://$SWA_NAME.azurestaticapps.net/admin"
 echo ""
