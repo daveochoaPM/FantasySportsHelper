@@ -1,0 +1,18 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "COSMOS_ENDPOINT": "https://<cosmos>.documents.azure.com:443/",
+    "COSMOS_KEY": "<local-dev-only>",
+    "COSMOS_DB": "fantasy_helper",
+    "OPENAI_API_KEY": "<if using OpenAI>",
+    "YAHOO_CLIENT_ID": "",
+    "YAHOO_CLIENT_SECRET": "",
+    "YAHOO_REDIRECT_URI": "https://<func>.azurewebsites.net/api/auth/yahoo/callback",
+    "GOOGLE_CLIENT_ID": "",
+    "GOOGLE_CLIENT_SECRET": "",
+    "GMAIL_REDIRECT_URI": "https://<func>.azurewebsites.net/api/auth/google/callback",
+    "SLACK_BOT_TOKEN": ""
+  }
+}

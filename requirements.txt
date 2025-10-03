@@ -1,0 +1,16 @@
+
+azure-functions
+requests
+pydantic
+google-auth
+google-auth-oauthlib
+google-api-python-client
+slack_sdk
+yahoo_fantasy_api
+azure-cosmos
+azure-identity
+openai
+jinja2
+python-dateutil
+itsdangerous
+tenacity

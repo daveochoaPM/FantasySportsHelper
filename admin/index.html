@@ -1,0 +1,384 @@
+
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fantasy Helper Admin</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  .card { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .form-group { margin: 15px 0; }
+  label { display: block; margin-bottom: 5px; font-weight: bold; }
+  input, select, textarea { padding: 8px; width: 100%; max-width: 400px; border: 1px solid #ccc; border-radius: 4px; }
+  button { padding: 10px 20px; background: #007cba; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+  button:hover { background: #005a87; }
+  button.secondary { background: #6c757d; }
+  button.secondary:hover { background: #545b62; }
+  button.danger { background: #dc3545; }
+  button.danger:hover { background: #c82333; }
+  .result { margin: 20px 0; padding: 15px; border-radius: 4px; }
+  .error { background: #ffe6e6; color: #d00; border: 1px solid #f5c6cb; }
+  .success { background: #e6ffe6; color: #060; border: 1px solid #c3e6cb; }
+  .info { background: #f0f8ff; color: #004085; border: 1px solid #b8daff; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  .table th, .table td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+  .table th { background: #f8f9fa; font-weight: bold; }
+  .tabs { display: flex; border-bottom: 1px solid #ddd; margin-bottom: 20px; }
+  .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; }
+  .tab.active { border-bottom-color: #007cba; font-weight: bold; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .status { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+  .status.connected { background: #d4edda; color: #155724; }
+  .status.disconnected { background: #f8d7da; color: #721c24; }
+  .auth-section { background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏒 Fantasy Helper Admin</h1>
+    <p>Manage leagues, managers, and test the system.</p>
+    
+    <!-- Authentication Status -->
+    <div class="auth-section">
+      <h3>🔐 Authentication Status</h3>
+      <p>Yahoo: <span id="yahooStatus" class="status disconnected">Not Connected</span> 
+         <button onclick="authYahoo()" class="secondary">Connect Yahoo</button></p>
+      <p>Google: <span id="googleStatus" class="status disconnected">Not Connected</span> 
+         <button onclick="authGoogle()" class="secondary">Connect Google</button></p>
+    </div>
+    
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('leagues')">Leagues</div>
+      <div class="tab" onclick="showTab('managers')">Managers</div>
+      <div class="tab" onclick="showTab('test')">Test Run</div>
+      <div class="tab" onclick="showTab('logs')">Logs</div>
+    </div>
+    
+    <!-- Leagues Tab -->
+    <div id="leagues" class="tab-content active">
+      <div class="card">
+        <h2>📊 Manage Leagues</h2>
+        
+        <h3>Add New League</h3>
+        <form id="leagueForm">
+          <div class="form-group">
+            <label for="leagueId">League ID:</label>
+            <input type="text" id="leagueId" name="leagueId" required placeholder="e.g., 123456">
+          </div>
+          <div class="form-group">
+            <label for="leagueName">League Name (optional):</label>
+            <input type="text" id="leagueName" name="leagueName" placeholder="My Fantasy League">
+          </div>
+          <div class="form-group">
+            <label for="sport">Sport:</label>
+            <select id="sport" name="sport">
+              <option value="nhl">NHL</option>
+              <option value="nfl">NFL</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="provider">Provider:</label>
+            <select id="provider" name="provider">
+              <option value="yahoo">Yahoo</option>
+              <option value="espn">ESPN</option>
+            </select>
+          </div>
+          <button type="submit">Add League</button>
+        </form>
+        
+        <h3>Sync League Data</h3>
+        <form id="syncForm">
+          <div class="form-group">
+            <label for="syncLeagueId">League ID:</label>
+            <input type="text" id="syncLeagueId" name="leagueId" required>
+          </div>
+          <button type="submit">Sync League</button>
+        </form>
+        
+        <h3>Existing Leagues</h3>
+        <div id="leaguesList">
+          <p>Loading leagues...</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Managers Tab -->
+    <div id="managers" class="tab-content">
+      <div class="card">
+        <h2>👥 Manage Managers</h2>
+        
+        <h3>Add Manager</h3>
+        <form id="managerForm">
+          <div class="form-group">
+            <label for="managerLeagueId">League ID:</label>
+            <input type="text" id="managerLeagueId" name="leagueId" required>
+          </div>
+          <div class="form-group">
+            <label for="teamId">Team ID:</label>
+            <input type="text" id="teamId" name="teamId" required>
+          </div>
+          <div class="form-group">
+            <label for="managerEmail">Email:</label>
+            <input type="email" id="managerEmail" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="managerName">Manager Name (optional):</label>
+            <input type="text" id="managerName" name="name" placeholder="John Doe">
+          </div>
+          <button type="submit">Add Manager</button>
+        </form>
+        
+        <h3>Existing Managers</h3>
+        <div id="managersList">
+          <p>Loading managers...</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Test Run Tab -->
+    <div id="test" class="tab-content">
+      <div class="card">
+        <h2>🧪 Test Run</h2>
+        <p>Test the complete guidance pipeline with email override.</p>
+        
+        <form id="runNowForm">
+          <div class="form-group">
+            <label for="testLeagueId">League ID:</label>
+            <input type="text" id="testLeagueId" name="leagueId" required>
+          </div>
+          <div class="form-group">
+            <label for="testTeamId">Team ID:</label>
+            <input type="text" id="testTeamId" name="teamId" required>
+          </div>
+          <div class="form-group">
+            <label for="testWeek">Week (optional):</label>
+            <input type="number" id="testWeek" name="week" value="1" min="1" max="30">
+          </div>
+          <div class="form-group">
+            <label for="testEmailOverride">Email Override (optional):</label>
+            <input type="email" id="testEmailOverride" name="emailOverride" placeholder="test@example.com">
+          </div>
+          <button type="submit">Run Test</button>
+        </form>
+        
+        <div id="testResult"></div>
+      </div>
+    </div>
+    
+    <!-- Logs Tab -->
+    <div id="logs" class="tab-content">
+      <div class="card">
+        <h2>📋 System Logs</h2>
+        <div id="logsContent">
+          <p>Recent guidance runs and system activity will appear here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    function showTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      
+      // Show selected tab
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+      
+      // Load data for the tab
+      if (tabName === 'leagues') loadLeagues();
+      if (tabName === 'managers') loadManagers();
+      if (tabName === 'logs') loadLogs();
+    }
+    
+    // Authentication
+    function authYahoo() {
+      window.open('/api/auth/yahoo/login', '_blank');
+    }
+    
+    function authGoogle() {
+      window.open('/api/auth/google/login', '_blank');
+    }
+    
+    // League management
+    document.getElementById('leagueForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      
+      try {
+        const response = await fetch('/api/admin/league', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        showResult(result, response.ok);
+        if (response.ok) loadLeagues();
+      } catch (error) {
+        showResult({ message: error.message }, false);
+      }
+    });
+    
+    document.getElementById('syncForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const leagueId = formData.get('leagueId');
+      
+      try {
+        const response = await fetch(`/api/league/${leagueId}/sync`, {
+          method: 'POST'
+        });
+        
+        const result = await response.json();
+        showResult(result, response.ok);
+        if (response.ok) loadLeagues();
+      } catch (error) {
+        showResult({ message: error.message }, false);
+      }
+    });
+    
+    // Manager management
+    document.getElementById('managerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      
+      try {
+        const response = await fetch('/api/admin/manager', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        showResult(result, response.ok);
+        if (response.ok) loadManagers();
+      } catch (error) {
+        showResult({ message: error.message }, false);
+      }
+    });
+    
+    // Test run
+    document.getElementById('runNowForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      
+      const resultDiv = document.getElementById('testResult');
+      resultDiv.innerHTML = '<div class="result info">Running test...</div>';
+      
+      try {
+        const response = await fetch('/api/admin/run-now', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          resultDiv.innerHTML = `<div class="result success">
+            <h3>✅ Test Successful!</h3>
+            <p><strong>Message ID:</strong> ${result.messageId}</p>
+            <p><strong>Email:</strong> ${result.email}</p>
+            <p><strong>Preview:</strong></p>
+            <ul>${result.preview.map(bullet => `<li>${bullet}</li>`).join('')}</ul>
+          </div>`;
+        } else {
+          resultDiv.innerHTML = `<div class="result error">
+            <h3>❌ Test Failed</h3>
+            <p>${result.message || 'Unknown error'}</p>
+          </div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="result error">
+          <h3>❌ Error</h3>
+          <p>${error.message}</p>
+        </div>`;
+      }
+    });
+    
+    // Load data functions
+    async function loadLeagues() {
+      try {
+        const response = await fetch('/api/admin/league');
+        const leagues = await response.json();
+        
+        const listDiv = document.getElementById('leaguesList');
+        if (leagues.length === 0) {
+          listDiv.innerHTML = '<p>No leagues configured yet.</p>';
+        } else {
+          listDiv.innerHTML = leagues.map(league => `
+            <div class="card">
+              <h4>${league.name || `League ${league.leagueId}`}</h4>
+              <p><strong>ID:</strong> ${league.leagueId}</p>
+              <p><strong>Sport:</strong> ${league.sport}</p>
+              <p><strong>Provider:</strong> ${league.provider}</p>
+              <p><strong>Current Week:</strong> ${league.currentWeek || 'Unknown'}</p>
+              <p><strong>Scoring Type:</strong> ${league.settings?.type || 'Unknown'}</p>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        document.getElementById('leaguesList').innerHTML = `<p>Error loading leagues: ${error.message}</p>`;
+      }
+    }
+    
+    async function loadManagers() {
+      try {
+        const response = await fetch('/api/admin/manager');
+        const managers = await response.json();
+        
+        const listDiv = document.getElementById('managersList');
+        if (managers.length === 0) {
+          listDiv.innerHTML = '<p>No managers configured yet.</p>';
+        } else {
+          listDiv.innerHTML = managers.map(manager => `
+            <div class="card">
+              <h4>${manager.name || `Manager ${manager.teamId}`}</h4>
+              <p><strong>Team ID:</strong> ${manager.teamId}</p>
+              <p><strong>Email:</strong> ${manager.email}</p>
+              <p><strong>League:</strong> ${manager.leagueId}</p>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        document.getElementById('managersList').innerHTML = `<p>Error loading managers: ${error.message}</p>`;
+      }
+    }
+    
+    async function loadLogs() {
+      document.getElementById('logsContent').innerHTML = '<p>Logs feature coming soon...</p>';
+    }
+    
+    // Utility functions
+    function showResult(result, success) {
+      const message = success ? result.message || 'Success!' : result.message || 'Error occurred';
+      const className = success ? 'success' : 'error';
+      
+      // Create a temporary result div if none exists
+      let resultDiv = document.querySelector('.result');
+      if (!resultDiv) {
+        resultDiv = document.createElement('div');
+        resultDiv.className = 'result';
+        document.querySelector('.card').appendChild(resultDiv);
+      }
+      
+      resultDiv.className = `result ${className}`;
+      resultDiv.innerHTML = `<p>${message}</p>`;
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        if (resultDiv) resultDiv.style.display = 'none';
+      }, 5000);
+    }
+    
+    // Load initial data
+    loadLeagues();
+  </script>
+</body></html>

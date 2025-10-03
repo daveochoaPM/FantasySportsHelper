@@ -1,0 +1,47 @@
+{
+  "navigationFallback": {
+    "rewrite": "/admin/index.html"
+  },
+  "auth": {
+    "rolesSource": "token",
+    "identityProviders": {
+      "azureActiveDirectory": {
+        "registration": {
+          "openIdIssuer": "https://login.microsoftonline.com/<tenant>/v2.0",
+          "clientIdSettingName": "SWA_AAD_CLIENT_ID"
+        }
+      }
+    }
+  },
+  "routes": [
+    {
+      "route": "/admin/*",
+      "allowedRoles": [
+        "admin"
+      ]
+    },
+    {
+      "route": "/api/admin/*",
+      "allowedRoles": [
+        "admin"
+      ]
+    },
+    {
+      "route": "/api/auth/*",
+      "allowedRoles": [
+        "anonymous"
+      ]
+    },
+    {
+      "route": "/api/league/*",
+      "allowedRoles": [
+        "admin"
+      ]
+    }
+  ],
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block"
+  }
+}

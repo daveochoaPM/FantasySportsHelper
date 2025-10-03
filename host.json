@@ -1,0 +1,21 @@
+{
+  "version": "2.0",
+  "extensions": {
+    "http": {
+      "routePrefix": "api"
+    },
+    "timers": {
+      "scheduleMonitor": {
+        "enabled": true
+      }
+    }
+  },
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "maxTelemetryItemsPerSecond": 1
+      }
+    }
+  }
+}
