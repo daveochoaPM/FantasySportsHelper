@@ -237,7 +237,7 @@ The scripts automatically create:
 3. **Deploy**: Static Web App automatically enforces security rules
 4. **Test**: Verify unauthorized users cannot access admin functions
 
-### Cost Estimation (West US)
+### Cost Estimation (West US 2)
 - **Function App (Consumption)**: ~$5-20/month
 - **Cosmos DB (Serverless)**: ~$10-50/month
 - **Static Web App**: Free tier

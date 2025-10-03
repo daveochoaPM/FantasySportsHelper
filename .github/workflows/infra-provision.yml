@@ -10,7 +10,7 @@ on:
       location:
         description: 'Azure Region'
         required: true
-        default: 'westus'
+        default: 'westus2'
         type: string
       namePrefix:
         description: 'Name Prefix for Resources'

@@ -4,7 +4,7 @@
 param(
     [string]$SubscriptionId = "",
     [string]$ResourceGroupName = "fantasyhelperrg",
-    [string]$Location = "West US",
+    [string]$Location = "West US 2",
     [string]$FunctionAppName = "fantasyhelperfunc",
     [string]$StaticWebAppName = "fantasyhelperweb",
     [string]$CosmosAccountName = "fantasyhelpercosmos",

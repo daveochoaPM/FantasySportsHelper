@@ -6,7 +6,7 @@
 # Default values
 SUBSCRIPTION_ID=""
 RESOURCE_GROUP_NAME="fantasyhelperrg"
-LOCATION="West US"
+LOCATION="West US 2"
 FUNCTION_APP_NAME="fantasyhelperfunc"
 STATIC_WEB_APP_NAME="fantasyhelperweb"
 COSMOS_ACCOUNT_NAME="fantasyhelpercosmos"

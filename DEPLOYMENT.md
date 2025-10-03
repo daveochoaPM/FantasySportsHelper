@@ -108,7 +108,7 @@ Use the "Provision Infrastructure" workflow for one-time setup:
 ```bash
 # Set variables
 RESOURCE_GROUP="fantasyhelperrg"
-LOCATION="westus"
+LOCATION="westus2"
 
 # Create resource group
 az group create --name $RESOURCE_GROUP --location $LOCATION
