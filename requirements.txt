@@ -9,8 +9,10 @@ slack_sdk
 yahoo_fantasy_api
 azure-cosmos
 azure-identity
+azure-storage-blob
 openai
 jinja2
 python-dateutil
 itsdangerous
 tenacity
+reportlab

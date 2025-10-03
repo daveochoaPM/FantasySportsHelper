@@ -51,6 +51,8 @@
     <div class="tabs">
       <div class="tab active" onclick="showTab('leagues')">Leagues</div>
       <div class="tab" onclick="showTab('managers')">Managers</div>
+      <div class="tab" onclick="showTab('config')">Configuration</div>
+      <div class="tab" onclick="showTab('reports')">Generate Reports</div>
       <div class="tab" onclick="showTab('test')">Test Run</div>
       <div class="tab" onclick="showTab('logs')">Logs</div>
     </div>
@@ -136,6 +138,184 @@
       </div>
     </div>
     
+    <!-- Configuration Tab -->
+    <div id="config" class="tab-content">
+      <div class="card">
+        <h2>⚙️ System Configuration</h2>
+        <p>Configure OAuth credentials and API keys for Yahoo Fantasy, Google Gmail, and OpenAI.</p>
+        
+        <h3>🔑 API Keys & Credentials</h3>
+        <form id="configForm">
+          <div class="form-group">
+            <label for="yahooClientId">Yahoo Fantasy Client ID:</label>
+            <input type="text" id="yahooClientId" name="yahooClientId" placeholder="Enter your Yahoo Fantasy API Client ID">
+            <small>Get this from <a href="https://developer.yahoo.com/fantasysports/" target="_blank">Yahoo Developer Console</a></small>
+          </div>
+          
+          <div class="form-group">
+            <label for="yahooClientSecret">Yahoo Fantasy Client Secret:</label>
+            <input type="password" id="yahooClientSecret" name="yahooClientSecret" placeholder="Enter your Yahoo Fantasy API Client Secret">
+            <small>Keep this secret secure</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="googleClientId">Google OAuth Client ID:</label>
+            <input type="text" id="googleClientId" name="googleClientId" placeholder="Enter your Google OAuth Client ID">
+            <small>Get this from <a href="https://console.developers.google.com/" target="_blank">Google Cloud Console</a></small>
+          </div>
+          
+          <div class="form-group">
+            <label for="googleClientSecret">Google OAuth Client Secret:</label>
+            <input type="password" id="googleClientSecret" name="googleClientSecret" placeholder="Enter your Google OAuth Client Secret">
+            <small>Keep this secret secure</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="openaiApiKey">OpenAI API Key (Optional):</label>
+            <input type="password" id="openaiApiKey" name="openaiApiKey" placeholder="Enter your OpenAI API Key">
+            <small>Used for AI-powered guidance enhancement</small>
+          </div>
+          
+          <button type="submit">Save Configuration</button>
+        </form>
+        
+        <h3>🔗 OAuth Setup Instructions</h3>
+        <div class="card">
+          <h4>Yahoo Fantasy Setup:</h4>
+          <ol>
+            <li>Go to <a href="https://developer.yahoo.com/fantasysports/" target="_blank">Yahoo Developer Console</a></li>
+            <li>Create a new application</li>
+            <li>Set redirect URI to: <code id="yahooRedirectUri">https://your-function-app.azurewebsites.net/api/auth/yahoo/callback</code></li>
+            <li>Copy Client ID and Client Secret to the form above</li>
+          </ol>
+        </div>
+        
+        <div class="card">
+          <h4>Google Gmail Setup:</h4>
+          <ol>
+            <li>Go to <a href="https://console.developers.google.com/" target="_blank">Google Cloud Console</a></li>
+            <li>Create a new project or select existing</li>
+            <li>Enable Gmail API</li>
+            <li>Create OAuth 2.0 credentials</li>
+            <li>Set redirect URI to: <code id="googleRedirectUri">https://your-function-app.azurewebsites.net/api/auth/google/callback</code></li>
+            <li>Copy Client ID and Client Secret to the form above</li>
+          </ol>
+        </div>
+        
+        <h3>🧪 Test Configuration</h3>
+        <div class="card">
+          <h4>Test API Keys & OAuth</h4>
+          <p>Verify that your configured credentials are working correctly.</p>
+          
+          <div class="form-group">
+            <button onclick="testYahooAuth()" class="secondary">Test Yahoo OAuth</button>
+            <span id="yahooTestStatus" class="status disconnected">Not Tested</span>
+          </div>
+          
+          <div class="form-group">
+            <button onclick="testGoogleAuth()" class="secondary">Test Google OAuth</button>
+            <span id="googleTestStatus" class="status disconnected">Not Tested</span>
+          </div>
+          
+          <div class="form-group">
+            <button onclick="testOpenAI()" class="secondary">Test OpenAI API</button>
+            <span id="openaiTestStatus" class="status disconnected">Not Tested</span>
+          </div>
+          
+          <div class="form-group">
+            <button onclick="testAllConfig()" class="primary">Test All Configuration</button>
+          </div>
+          
+          <div id="testResults"></div>
+        </div>
+        
+        <h3>📊 Current Configuration Status</h3>
+        <div id="configStatus">
+          <p>Loading configuration status...</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Generate Reports Tab -->
+    <div id="reports" class="tab-content">
+      <div class="card">
+        <h2>📄 Generate Reports</h2>
+        <p>Generate printable reports for all team managers. Perfect for Monday morning distribution!</p>
+        
+        <h3>📋 Report Generation</h3>
+        <form id="reportForm">
+          <div class="form-group">
+            <label for="reportLeagueId">League ID:</label>
+            <input type="text" id="reportLeagueId" name="leagueId" required placeholder="Enter league ID">
+          </div>
+          
+          <div class="form-group">
+            <label for="reportWeek">Week:</label>
+            <input type="number" id="reportWeek" name="week" value="1" min="1" max="30" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="reportTitle">Report Title (optional):</label>
+            <input type="text" id="reportTitle" name="title" placeholder="e.g., Week 1 Fantasy Report">
+          </div>
+          
+          <div class="form-group">
+            <label for="reportFormat">Report Format:</label>
+            <select id="reportFormat" name="format">
+              <option value="pdf">PDF (Professional)</option>
+              <option value="html">HTML (Web View)</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="reportOptions">Report Options:</label>
+            <div style="margin: 10px 0;">
+              <label><input type="checkbox" id="includeRosters" name="includeRosters" checked> Include Current Rosters</label><br>
+              <label><input type="checkbox" id="includeSchedule" name="includeSchedule" checked> Include NHL Schedule</label><br>
+              <label><input type="checkbox" id="includeStats" name="includeStats" checked> Include Player Statistics</label><br>
+              <label><input type="checkbox" id="includeGuidance" name="includeGuidance" checked> Include AI Guidance</label>
+            </div>
+          </div>
+          
+          <button type="submit" class="primary">Generate Reports</button>
+        </form>
+        
+        <h3>🏷️ League Branding</h3>
+        <div class="card">
+          <h4>Upload League Logo</h4>
+          <p>Upload a logo to appear at the top of each report page.</p>
+          
+          <form id="logoForm" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="logoFile">Logo File:</label>
+              <input type="file" id="logoFile" name="logo" accept="image/*" required>
+              <small>Recommended: PNG or JPG, max 2MB, 300x100px for best results</small>
+            </div>
+            <button type="submit" class="secondary">Upload Logo</button>
+          </form>
+          
+          <div id="logoStatus">
+            <p>No logo uploaded yet.</p>
+          </div>
+        </div>
+        
+        <div id="reportProgress" style="display: none;">
+          <h3>🔄 Generating Reports...</h3>
+          <div class="progress-bar">
+            <div id="progressFill" style="width: 0%; background: #007cba; height: 20px; border-radius: 4px;"></div>
+          </div>
+          <p id="progressText">Initializing...</p>
+        </div>
+        
+        <div id="reportResults"></div>
+        
+        <h3>📊 Recent Reports</h3>
+        <div id="recentReports">
+          <p>No reports generated yet.</p>
+        </div>
+      </div>
+    </div>
+    
     <!-- Test Run Tab -->
     <div id="test" class="tab-content">
       <div class="card">
@@ -191,6 +371,8 @@
       // Load data for the tab
       if (tabName === 'leagues') loadLeagues();
       if (tabName === 'managers') loadManagers();
+      if (tabName === 'config') loadConfig();
+      if (tabName === 'reports') loadReports();
       if (tabName === 'logs') loadLogs();
     }
     
@@ -258,6 +440,122 @@
         const result = await response.json();
         showResult(result, response.ok);
         if (response.ok) loadManagers();
+      } catch (error) {
+        showResult({ message: error.message }, false);
+      }
+    });
+    
+    // Logo upload
+    document.getElementById('logoForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      
+      try {
+        const response = await fetch('/api/admin/upload-logo', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          document.getElementById('logoStatus').innerHTML = `
+            <div class="result success">
+              <p>✅ Logo uploaded successfully!</p>
+              <img src="${result.logoUrl}" style="max-width: 200px; max-height: 100px; border: 1px solid #ddd; padding: 5px;">
+            </div>
+          `;
+        } else {
+          document.getElementById('logoStatus').innerHTML = `
+            <div class="result error">
+              <p>❌ Logo upload failed: ${result.message}</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        document.getElementById('logoStatus').innerHTML = `
+          <div class="result error">
+            <p>❌ Error: ${error.message}</p>
+          </div>
+        `;
+      }
+    });
+    
+    // Report generation
+    document.getElementById('reportForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      
+      // Show progress
+      document.getElementById('reportProgress').style.display = 'block';
+      document.getElementById('reportResults').innerHTML = '';
+      
+      try {
+        const response = await fetch('/api/admin/generate-reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          // Show success with download links
+          const format = data.format || 'html';
+          const downloadText = format === 'pdf' ? '📄 Download PDF Report' : '📄 Download HTML Report';
+          const printText = format === 'pdf' ? '🖨️ Print PDF' : '🖨️ Print View';
+          
+          document.getElementById('reportResults').innerHTML = `
+            <div class="result success">
+              <h3>✅ Reports Generated Successfully!</h3>
+              <p><strong>Total Teams:</strong> ${result.totalTeams}</p>
+              <p><strong>Generated:</strong> ${result.generatedReports}</p>
+              <p><strong>Failed:</strong> ${result.failedReports}</p>
+              <p><strong>Format:</strong> ${format.toUpperCase()}</p>
+              <div style="margin-top: 15px;">
+                <a href="${result.downloadUrl}" class="button primary" target="_blank">${downloadText}</a>
+                <a href="${result.printUrl}" class="button secondary" target="_blank">${printText}</a>
+              </div>
+            </div>
+          `;
+        } else {
+          document.getElementById('reportResults').innerHTML = `
+            <div class="result error">
+              <h3>❌ Report Generation Failed</h3>
+              <p>${result.message || 'Unknown error occurred'}</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        document.getElementById('reportResults').innerHTML = `
+          <div class="result error">
+            <h3>❌ Error</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      } finally {
+        document.getElementById('reportProgress').style.display = 'none';
+        loadReports(); // Refresh recent reports
+      }
+    });
+    
+    // Configuration management
+    document.getElementById('configForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      
+      try {
+        const response = await fetch('/api/admin/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        showResult(result, response.ok);
+        if (response.ok) loadConfig();
       } catch (error) {
         showResult({ message: error.message }, false);
       }
@@ -349,6 +647,165 @@
         }
       } catch (error) {
         document.getElementById('managersList').innerHTML = `<p>Error loading managers: ${error.message}</p>`;
+      }
+    }
+    
+    async function loadConfig() {
+      try {
+        const response = await fetch('/api/admin/config');
+        const config = await response.json();
+        
+        // Populate form fields
+        document.getElementById('yahooClientId').value = config.yahooClientId || '';
+        document.getElementById('yahooClientSecret').value = config.yahooClientSecret ? '••••••••' : '';
+        document.getElementById('googleClientId').value = config.googleClientId || '';
+        document.getElementById('googleClientSecret').value = config.googleClientSecret ? '••••••••' : '';
+        document.getElementById('openaiApiKey').value = config.openaiApiKey ? '••••••••' : '';
+        
+        // Update redirect URIs
+        document.getElementById('yahooRedirectUri').textContent = config.yahooRedirectUri || 'https://your-function-app.azurewebsites.net/api/auth/yahoo/callback';
+        document.getElementById('googleRedirectUri').textContent = config.googleRedirectUri || 'https://your-function-app.azurewebsites.net/api/auth/google/callback';
+        
+        // Show configuration status
+        const statusDiv = document.getElementById('configStatus');
+        statusDiv.innerHTML = `
+          <div class="card">
+            <h4>Configuration Status:</h4>
+            <p>Yahoo Client ID: <span class="status ${config.yahooClientId ? 'connected' : 'disconnected'}">${config.yahooClientId ? 'Configured' : 'Not Set'}</span></p>
+            <p>Google Client ID: <span class="status ${config.googleClientId ? 'connected' : 'disconnected'}">${config.googleClientId ? 'Configured' : 'Not Set'}</span></p>
+            <p>OpenAI API Key: <span class="status ${config.openaiApiKey ? 'connected' : 'disconnected'}">${config.openaiApiKey ? 'Configured' : 'Not Set'}</span></p>
+          </div>
+        `;
+      } catch (error) {
+        document.getElementById('configStatus').innerHTML = `<p>Error loading configuration: ${error.message}</p>`;
+      }
+    }
+    
+    // Configuration testing functions
+    async function testYahooAuth() {
+      const statusSpan = document.getElementById('yahooTestStatus');
+      statusSpan.textContent = 'Testing...';
+      statusSpan.className = 'status disconnected';
+      
+      try {
+        const response = await fetch('/api/admin/test/yahoo', { method: 'POST' });
+        const result = await response.json();
+        
+        if (response.ok) {
+          statusSpan.textContent = '✅ Working';
+          statusSpan.className = 'status connected';
+        } else {
+          statusSpan.textContent = '❌ Failed';
+          statusSpan.className = 'status disconnected';
+        }
+        
+        showTestResult('Yahoo OAuth', result);
+      } catch (error) {
+        statusSpan.textContent = '❌ Error';
+        statusSpan.className = 'status disconnected';
+        showTestResult('Yahoo OAuth', { error: error.message });
+      }
+    }
+    
+    async function testGoogleAuth() {
+      const statusSpan = document.getElementById('googleTestStatus');
+      statusSpan.textContent = 'Testing...';
+      statusSpan.className = 'status disconnected';
+      
+      try {
+        const response = await fetch('/api/admin/test/google', { method: 'POST' });
+        const result = await response.json();
+        
+        if (response.ok) {
+          statusSpan.textContent = '✅ Working';
+          statusSpan.className = 'status connected';
+        } else {
+          statusSpan.textContent = '❌ Failed';
+          statusSpan.className = 'status disconnected';
+        }
+        
+        showTestResult('Google OAuth', result);
+      } catch (error) {
+        statusSpan.textContent = '❌ Error';
+        statusSpan.className = 'status disconnected';
+        showTestResult('Google OAuth', { error: error.message });
+      }
+    }
+    
+    async function testOpenAI() {
+      const statusSpan = document.getElementById('openaiTestStatus');
+      statusSpan.textContent = 'Testing...';
+      statusSpan.className = 'status disconnected';
+      
+      try {
+        const response = await fetch('/api/admin/test/openai', { method: 'POST' });
+        const result = await response.json();
+        
+        if (response.ok) {
+          statusSpan.textContent = '✅ Working';
+          statusSpan.className = 'status connected';
+        } else {
+          statusSpan.textContent = '❌ Failed';
+          statusSpan.className = 'status disconnected';
+        }
+        
+        showTestResult('OpenAI API', result);
+      } catch (error) {
+        statusSpan.textContent = '❌ Error';
+        statusSpan.className = 'status disconnected';
+        showTestResult('OpenAI API', { error: error.message });
+      }
+    }
+    
+    async function testAllConfig() {
+      // Reset all status indicators
+      document.getElementById('yahooTestStatus').textContent = 'Testing...';
+      document.getElementById('googleTestStatus').textContent = 'Testing...';
+      document.getElementById('openaiTestStatus').textContent = 'Testing...';
+      
+      // Run all tests
+      await testYahooAuth();
+      await testGoogleAuth();
+      await testOpenAI();
+      
+      // Show summary
+      const resultsDiv = document.getElementById('testResults');
+      resultsDiv.innerHTML = '<div class="result info"><h4>Configuration Test Complete</h4><p>Check the status indicators above for individual test results.</p></div>';
+    }
+    
+    function showTestResult(testName, result) {
+      const resultsDiv = document.getElementById('testResults');
+      const className = result.error ? 'error' : 'success';
+      const message = result.error ? result.error : result.message || 'Test completed successfully';
+      
+      resultsDiv.innerHTML = `<div class="result ${className}"><strong>${testName}:</strong> ${message}</div>`;
+    }
+    
+    async function loadReports() {
+      try {
+        const response = await fetch('/api/admin/reports');
+        const reports = await response.json();
+        
+        const reportsDiv = document.getElementById('recentReports');
+        if (reports.length === 0) {
+          reportsDiv.innerHTML = '<p>No reports generated yet.</p>';
+        } else {
+          reportsDiv.innerHTML = reports.map(report => `
+            <div class="card">
+              <h4>${report.title || `Report ${report.id}`}</h4>
+              <p><strong>League:</strong> ${report.leagueId}</p>
+              <p><strong>Week:</strong> ${report.week}</p>
+              <p><strong>Generated:</strong> ${new Date(report.createdAt).toLocaleString()}</p>
+              <p><strong>Teams:</strong> ${report.totalTeams}</p>
+              <div style="margin-top: 10px;">
+                <a href="${report.downloadUrl}" class="button secondary" target="_blank">📄 Download</a>
+                <a href="${report.printUrl}" class="button secondary" target="_blank">🖨️ Print</a>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (error) {
+        document.getElementById('recentReports').innerHTML = `<p>Error loading reports: ${error.message}</p>`;
       }
     }
     

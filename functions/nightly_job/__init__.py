@@ -10,6 +10,16 @@ from engine.llm import rewrite
 from jinja2 import Template
 import os
 
+def get_current_logo():
+    """Get the most recent logo from storage"""
+    try:
+        logos = cosmos.query("logos", "SELECT * FROM c ORDER BY c.uploadedAt DESC")
+        if logos:
+            return logos[0].get("blobUrl", "")
+    except:
+        pass
+    return ""
+
 def main(mytimer: func.TimerRequest) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat()
     logging.info(f"Nightly job executed at {utc_timestamp}")
@@ -116,6 +126,9 @@ def main(mytimer: func.TimerRequest) -> None:
                         recommendations = [item for item in items if item["type"] == "start_bench"]
                         insights = [item for item in items if item["type"] == "schedule_insight"]
                         
+                        # Get current logo
+                        logo_url = get_current_logo()
+                        
                         html = template.render(
                             week=week,
                             team_name=team_name,
@@ -124,7 +137,8 @@ def main(mytimer: func.TimerRequest) -> None:
                             insights=insights,
                             source_season=current_season,
                             fallback_reason=None,
-                            scoring_type=league_settings.get("type", "unknown")
+                            scoring_type=league_settings.get("type", "unknown"),
+                            logo_url=logo_url
                         )
                         
                         # Send email

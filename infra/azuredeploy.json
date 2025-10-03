@@ -295,7 +295,7 @@
       ],
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
-        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName'))).identity.principalId]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName')), '2022-03-01', 'Full').identity.principalId]",
         "scope": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
       },
       "condition": "[parameters('enableKeyVault')]"
@@ -305,6 +305,9 @@
       "apiVersion": "2022-03-01",
       "name": "[variables('staticWebAppName')]",
       "location": "[parameters('location')]",
+      "sku": {
+        "name": "Free"
+      },
       "properties": {
         "repositoryUrl": "https://github.com/DaveOchoa/FantasySportsHelper",
         "branch": "main",
