@@ -12,9 +12,27 @@ Serverless Azure project pulling Yahoo Fantasy NHL data, joining NHL schedules, 
 - **Extensible Design**: Ready for ESPN/NFL expansion
 - **Production Security**: Azure AD authentication with role-based access control
 
-## Quick Start
+## Deployment Options
 
-### 1. Deploy to Azure (Automated)
+### Option 1: One-Click Deploy to Azure (Recommended)
+
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FDaveOchoa%2FFantasySportsHelper%2Fmain%2Finfra%2Fazuredeploy.json)
+
+This button will automatically provision all Azure resources:
+- ✅ **Resource Group** with unique naming
+- ✅ **Cosmos DB** (serverless) for data storage
+- ✅ **Function App** (Python 3.10, Linux Consumption)
+- ✅ **Static Web App** for admin dashboard
+- ✅ **Key Vault** for secure secret management
+- ✅ **Application Insights** for monitoring
+- ✅ **Storage Account** for Function App runtime
+
+**After deployment:**
+1. Set repository variables: `RESOURCE_GROUP`, `FUNCTION_APP_NAME`, `SWA_NAME`
+2. Add OAuth secrets to Key Vault (Yahoo, Google, OpenAI)
+3. Configure Azure AD app registration for Static Web App
+
+### Option 2: Manual Deployment Scripts
 ```bash
 # Windows PowerShell
 .\deploy.ps1
@@ -22,6 +40,33 @@ Serverless Azure project pulling Yahoo Fantasy NHL data, joining NHL schedules, 
 # Linux/Mac
 ./deploy.sh
 ```
+
+## Continuous Integration/Deployment
+
+This repository includes GitHub Actions workflows for automated deployment:
+
+### Automatic Deployment
+- **Trigger**: Push to `main` branch
+- **Actions**: 
+  - Deploy Azure Functions (Python) to your Function App
+  - Deploy Static Web App admin interface
+- **Authentication**: Uses OpenID Connect (OIDC) - no stored secrets required
+
+### Manual Infrastructure Provisioning
+- **Trigger**: Manual workflow dispatch
+- **Actions**: Deploy ARM template to provision all Azure resources
+- **Parameters**: Resource group, location, name prefix, Azure AD tenant ID
+
+### Setup CI/CD
+1. **Configure OIDC**: Create Azure AD app registration with federated credentials
+2. **Set Repository Secrets**:
+   - `AZURE_SUBSCRIPTION_ID`
+   - `AZURE_TENANT_ID` 
+   - `AZURE_CLIENT_ID`
+3. **Set Repository Variables** (after infrastructure deployment):
+   - `RESOURCE_GROUP`
+   - `FUNCTION_APP_NAME`
+   - `SWA_NAME`
 
 ### 2. Configure OAuth Applications
 - **Yahoo**: Create app at https://developer.yahoo.com/fantasysports/

@@ -2,10 +2,103 @@
 
 Complete step-by-step guide to deploy the Fantasy Sports Helper to Azure.
 
+## Deployment Options
+
+### Option 1: One-Click Deploy to Azure (Recommended)
+
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FDaveOchoa%2FFantasySportsHelper%2Fmain%2Finfra%2Fazuredeploy.json)
+
+This automated deployment provisions all required Azure resources with a single click.
+
+**What gets deployed:**
+- Resource Group with unique naming
+- Cosmos DB (serverless) for data storage
+- Function App (Python 3.10, Linux Consumption)
+- Static Web App for admin dashboard
+- Key Vault for secure secret management
+- Application Insights for monitoring
+- Storage Account for Function App runtime
+
+**Post-deployment steps:**
+1. Set GitHub repository variables: `RESOURCE_GROUP`, `FUNCTION_APP_NAME`, `SWA_NAME`
+2. Add OAuth secrets to Key Vault (Yahoo, Google, OpenAI)
+3. Configure Azure AD app registration for Static Web App
+4. Set up GitHub Actions OIDC authentication
+
+### Option 2: GitHub Actions Infrastructure Provisioning
+
+Use the manual workflow to deploy infrastructure:
+
+1. Go to **Actions** → **Provision Infrastructure**
+2. Click **Run workflow**
+3. Fill in parameters:
+   - Resource Group Name
+   - Azure Region
+   - Name Prefix for Resources
+   - Azure AD Tenant ID
+4. Click **Run workflow**
+
+### Option 3: Manual Deployment (Legacy)
+
+Use the PowerShell/Bash scripts for manual deployment.
+
+## GitHub Actions CI/CD Setup
+
+### Configure OpenID Connect (OIDC) Authentication
+
+1. **Create Azure AD App Registration:**
+   ```bash
+   # Create app registration
+   az ad app create --display-name "Fantasy Helper GitHub Actions"
+   
+   # Note the Application (client) ID
+   CLIENT_ID="<your-client-id>"
+   ```
+
+2. **Create Federated Credential:**
+   - Go to Azure Portal → Azure Active Directory → App registrations
+   - Find your app → Certificates & secrets → Federated credentials
+   - Add credential:
+     - **Federated credential scenario**: GitHub Actions deploying Azure resources
+     - **Organization**: `DaveOchoa` (or your GitHub org)
+     - **Repository**: `FantasySportsHelper`
+     - **Entity type**: Branch
+     - **Branch name**: `main`
+     - **Name**: `main-branch`
+
+3. **Set Repository Secrets:**
+   - Go to GitHub repository → Settings → Secrets and variables → Actions
+   - Add secrets:
+     - `AZURE_SUBSCRIPTION_ID`: Your Azure subscription ID
+     - `AZURE_TENANT_ID`: Your Azure AD tenant ID
+     - `AZURE_CLIENT_ID`: The app registration client ID from step 1
+
+4. **Set Repository Variables (after infrastructure deployment):**
+   - Go to GitHub repository → Settings → Secrets and variables → Actions
+   - Add variables:
+     - `RESOURCE_GROUP`: Resource group name from deployment
+     - `FUNCTION_APP_NAME`: Function app name from deployment
+     - `SWA_NAME`: Static web app name from deployment
+
+### Automatic Deployment Workflow
+
+Once configured, the repository will automatically:
+- Deploy Azure Functions on push to `main` branch
+- Deploy Static Web App admin interface
+- Use OIDC authentication (no stored secrets)
+
+### Manual Infrastructure Provisioning
+
+Use the "Provision Infrastructure" workflow for one-time setup:
+1. Go to Actions → Provision Infrastructure
+2. Click "Run workflow"
+3. Provide required parameters
+4. Monitor deployment progress
+
 ## Prerequisites
 
 - Azure subscription with contributor access
-- Azure CLI installed (`az --version`)
+- Azure CLI installed (`az --version`) (for manual deployment)
 - Git configured
 - Local development environment set up
 

@@ -1,0 +1,80 @@
+name: Provision Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      resourceGroupName:
+        description: 'Resource Group Name'
+        required: true
+        type: string
+      location:
+        description: 'Azure Region'
+        required: true
+        default: 'westus'
+        type: string
+      namePrefix:
+        description: 'Name Prefix for Resources'
+        required: true
+        default: 'fantasyhelper'
+        type: string
+      aadTenantId:
+        description: 'Azure AD Tenant ID'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create Resource Group
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az group create \
+              --name ${{ github.event.inputs.resourceGroupName }} \
+              --location ${{ github.event.inputs.location }}
+
+      - name: Deploy ARM Template
+        uses: azure/arm-deploy@v2
+        with:
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ github.event.inputs.resourceGroupName }}
+          template: ./infra/azuredeploy.json
+          parameters: |
+            namePrefix=${{ github.event.inputs.namePrefix }}
+            location=${{ github.event.inputs.location }}
+            aadTenantId=${{ github.event.inputs.aadTenantId }}
+          deploymentMode: Incremental
+          scope: ResourceGroup
+
+      - name: Output Deployment Results
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            echo "Deployment completed successfully!"
+            echo "Function App Name: $(az deployment group show --resource-group ${{ github.event.inputs.resourceGroupName }} --name azuredeploy --query 'properties.outputs.functionAppName.value' -o tsv)"
+            echo "Static Web App Name: $(az deployment group show --resource-group ${{ github.event.inputs.resourceGroupName }} --name azuredeploy --query 'properties.outputs.staticWebAppName.value' -o tsv)"
+            echo "Key Vault Name: $(az deployment group show --resource-group ${{ github.event.inputs.resourceGroupName }} --name azuredeploy --query 'properties.outputs.keyVaultName.value' -o tsv)"
+            echo "Cosmos Account Name: $(az deployment group show --resource-group ${{ github.event.inputs.resourceGroupName }} --name azuredeploy --query 'properties.outputs.cosmosAccountName.value' -o tsv)"
+            echo ""
+            echo "Next steps:"
+            echo "1. Set repository variables: RESOURCE_GROUP, FUNCTION_APP_NAME, SWA_NAME"
+            echo "2. Add OAuth secrets to Key Vault"
+            echo "3. Configure Azure AD app registration for Static Web App"

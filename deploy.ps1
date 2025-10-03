@@ -110,8 +110,10 @@ Write-Host "Checking resource name availability..." -ForegroundColor Yellow
 Write-Host "This helps avoid conflicts with existing Azure resources." -ForegroundColor White
 
 # Check Static Web App name availability
-$swaCheck = az staticwebapp show --name $StaticWebAppName --resource-group $ResourceGroupName --output tsv 2>$null
+$swaExists = $false
+az staticwebapp show --name $StaticWebAppName --resource-group $ResourceGroupName --output tsv 2>$null
 if ($LASTEXITCODE -eq 0) {
+    $swaExists = $true
     Write-Host "⚠ Static Web App name '$StaticWebAppName' may already exist in this resource group." -ForegroundColor Yellow
     $changeSwa = Read-Host "Do you want to use a different Static Web App name? (y/n)"
     if ($changeSwa -eq "y" -or $changeSwa -eq "Y") {
@@ -120,8 +122,10 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 # Check Function App name availability
-$funcCheck = az functionapp show --name $FunctionAppName --resource-group $ResourceGroupName --output tsv 2>$null
+$funcExists = $false
+az functionapp show --name $FunctionAppName --resource-group $ResourceGroupName --output tsv 2>$null
 if ($LASTEXITCODE -eq 0) {
+    $funcExists = $true
     Write-Host "⚠ Function App name '$FunctionAppName' may already exist in this resource group." -ForegroundColor Yellow
     $changeFunc = Read-Host "Do you want to use a different Function App name? (y/n)"
     if ($changeFunc -eq "y" -or $changeFunc -eq "Y") {
@@ -130,8 +134,10 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 # Check Cosmos DB name availability
-$cosmosCheck = az cosmosdb show --name $CosmosAccountName --resource-group $ResourceGroupName --output tsv 2>$null
+$cosmosExists = $false
+az cosmosdb show --name $CosmosAccountName --resource-group $ResourceGroupName --output tsv 2>$null
 if ($LASTEXITCODE -eq 0) {
+    $cosmosExists = $true
     Write-Host "⚠ Cosmos DB name '$CosmosAccountName' may already exist in this resource group." -ForegroundColor Yellow
     $changeCosmos = Read-Host "Do you want to use a different Cosmos DB name? (y/n)"
     if ($changeCosmos -eq "y" -or $changeCosmos -eq "Y") {
@@ -140,8 +146,10 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 # Check Storage Account name availability
-$storageCheck = az storage account show --name $StorageAccountName --resource-group $ResourceGroupName --output tsv 2>$null
+$storageExists = $false
+az storage account show --name $StorageAccountName --resource-group $ResourceGroupName --output tsv 2>$null
 if ($LASTEXITCODE -eq 0) {
+    $storageExists = $true
     Write-Host "⚠ Storage Account name '$StorageAccountName' may already exist in this resource group." -ForegroundColor Yellow
     $changeStorage = Read-Host "Do you want to use a different Storage Account name? (y/n)"
     if ($changeStorage -eq "y" -or $changeStorage -eq "Y") {
@@ -154,6 +162,20 @@ Write-Host "  Static Web App: $StaticWebAppName" -ForegroundColor White
 Write-Host "  Function App: $FunctionAppName" -ForegroundColor White
 Write-Host "  Cosmos DB: $CosmosAccountName" -ForegroundColor White
 Write-Host "  Storage Account: $StorageAccountName" -ForegroundColor White
+
+# Show summary of existing resources
+$existingResources = @()
+if ($swaExists) { $existingResources += "Static Web App" }
+if ($funcExists) { $existingResources += "Function App" }
+if ($cosmosExists) { $existingResources += "Cosmos DB" }
+if ($storageExists) { $existingResources += "Storage Account" }
+
+if ($existingResources.Count -gt 0) {
+    Write-Host "⚠ The following resources may already exist: $($existingResources -join ', ')" -ForegroundColor Yellow
+    Write-Host "  This could cause conflicts during deployment." -ForegroundColor White
+} else {
+    Write-Host "✓ All resource names appear to be available." -ForegroundColor Green
+}
 Write-Host ""
 
 # Create resource group
@@ -261,7 +283,7 @@ if (-not (Test-AzureResource "Microsoft.Web/staticSites" $StaticWebAppName $Reso
 
 # Get Static Web App details
 Write-Host "Retrieving Static Web App details..." -ForegroundColor Yellow
-$swaDetails = az staticwebapp show --name $StaticWebAppName --resource-group $ResourceGroupName --query "{defaultHostname:defaultHostname,deploymentToken:deploymentToken}" --output json
+$swaDetails = az staticwebapp show --name $StaticWebAppName --resource-group $ResourceGroupName --query '{"defaultHostname":defaultHostname,"deploymentToken":deploymentToken}' --output json
 if (-not $swaDetails) {
     Write-Host "✗ Failed to retrieve Static Web App details. Exiting." -ForegroundColor Red
     exit 1
@@ -311,7 +333,7 @@ if (-not $swaUrlValid) {
 
 # Get Function App URL
 Write-Host "Retrieving Function App details..." -ForegroundColor Yellow
-$functionAppDetails = az functionapp show --name $FunctionAppName --resource-group $ResourceGroupName --query "{defaultHostName:defaultHostName}" --output json
+$functionAppDetails = az functionapp show --name $FunctionAppName --resource-group $ResourceGroupName --query '{"defaultHostName":defaultHostName}' --output json
 $functionUrl = $null
 $functionUrlValid = $false
 if ($functionAppDetails) {
