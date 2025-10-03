@@ -6,11 +6,11 @@
 set -e  # Exit on any error
 
 # Configuration - Update these values
-RESOURCE_GROUP="fantasy-helper-rg"
+RESOURCE_GROUP="fantasyhelperrg"
 LOCATION="westus"
-COSMOS_ACCOUNT="fantasy-helper-cosmos"
-FUNCTION_APP="fantasy-helper-functions"
-SWA_NAME="fantasy-helper-admin"
+COSMOS_ACCOUNT="fantasyhelpercosmos"
+FUNCTION_APP="fantasyhelperfunctions"
+SWA_NAME="fantasyhelperadmin"
 STORAGE_ACCOUNT="fantasyhelperstorage"
 
 echo "🚀 Starting Fantasy Sports Helper deployment to Azure..."
@@ -114,7 +114,7 @@ az functionapp config appsettings set \
 echo "✅ Basic infrastructure deployed successfully!"
 echo ""
 echo "🔧 Next steps:"
-echo "1. Configure OAuth applications (Yahoo & Google)"
+echo "1. Configure OAuth applications (Yahoo and Google)"
 echo "2. Set OAuth credentials in Function App settings:"
 echo "   az functionapp config appsettings set --resource-group $RESOURCE_GROUP --name $FUNCTION_APP --settings YAHOO_CLIENT_ID='<your-id>' YAHOO_CLIENT_SECRET='<your-secret>'"
 echo "3. Deploy your code:"

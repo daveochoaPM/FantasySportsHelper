@@ -14,7 +14,7 @@ Complete step-by-step guide to deploy the Fantasy Sports Helper to Azure.
 ### 1.1 Create Resource Group
 ```bash
 # Set variables
-RESOURCE_GROUP="fantasy-helper-rg"
+RESOURCE_GROUP="fantasyhelperrg"
 LOCATION="westus"
 
 # Create resource group
@@ -24,7 +24,7 @@ az group create --name $RESOURCE_GROUP --location $LOCATION
 ### 1.2 Create Cosmos DB Account
 ```bash
 # Set variables
-COSMOS_ACCOUNT="fantasy-helper-cosmos"
+COSMOS_ACCOUNT="fantasyhelpercosmos"
 DATABASE_NAME="fantasy_helper"
 
 # Create Cosmos DB account
@@ -58,7 +58,7 @@ az storage account create \
 ### 1.4 Create Function App
 ```bash
 # Set variables
-FUNCTION_APP="fantasy-helper-functions"
+FUNCTION_APP="fantasyhelperfunctions"
 PYTHON_VERSION="3.9"
 
 # Create Function App
@@ -76,7 +76,7 @@ az functionapp create \
 ### 1.5 Create Static Web App
 ```bash
 # Set variables
-SWA_NAME="fantasy-helper-admin"
+SWA_NAME="fantasyhelperadmin"
 SWA_SOURCE="https://github.com/DaveOchoa/FantasySportsHelper"
 
 # Create Static Web App

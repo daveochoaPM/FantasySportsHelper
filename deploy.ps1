@@ -2,11 +2,11 @@
 # Run this script to deploy the complete application to Azure
 
 param(
-    [string]$ResourceGroup = "fantasy-helper-rg",
+    [string]$ResourceGroup = "fantasyhelperrg",
     [string]$Location = "westus",
-    [string]$CosmosAccount = "fantasy-helper-cosmos",
-    [string]$FunctionApp = "fantasy-helper-functions",
-    [string]$SwaName = "fantasy-helper-admin",
+    [string]$CosmosAccount = "fantasyhelpercosmos",
+    [string]$FunctionApp = "fantasyhelperfunctions",
+    [string]$SwaName = "fantasyhelperadmin",
     [string]$StorageAccount = "fantasyhelperstorage"
 )
 
@@ -111,7 +111,7 @@ az functionapp config appsettings set `
 Write-Host "✅ Basic infrastructure deployed successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "🔧 Next steps:" -ForegroundColor Cyan
-Write-Host "1. Configure OAuth applications (Yahoo & Google)"
+Write-Host "1. Configure OAuth applications (Yahoo and Google)"
 Write-Host "2. Set OAuth credentials in Function App settings:"
 Write-Host "   az functionapp config appsettings set --resource-group $ResourceGroup --name $FunctionApp --settings YAHOO_CLIENT_ID='<your-id>' YAHOO_CLIENT_SECRET='<your-secret>'"
 Write-Host "3. Deploy your code:"
