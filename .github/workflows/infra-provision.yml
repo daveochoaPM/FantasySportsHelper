@@ -8,9 +8,8 @@ on:
         required: true
         type: string
       location:
-        description: 'Azure Region'
+        description: 'Azure Region (westus2, centralus, eastus2, westeurope, eastasia)'
         required: true
-        default: 'westus2'
         type: string
       namePrefix:
         description: 'Name Prefix for Resources'

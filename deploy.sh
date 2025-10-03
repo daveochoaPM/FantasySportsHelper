@@ -6,7 +6,7 @@
 # Default values
 SUBSCRIPTION_ID=""
 RESOURCE_GROUP_NAME="fantasyhelperrg"
-LOCATION="West US 2"
+LOCATION=""
 FUNCTION_APP_NAME="fantasyhelperfunc"
 STATIC_WEB_APP_NAME="fantasyhelperweb"
 COSMOS_ACCOUNT_NAME="fantasyhelpercosmos"
@@ -124,6 +124,34 @@ else
     exit 1
 fi
 
+# Validate and set location
+if [ -z "$LOCATION" ]; then
+    echo "Available regions for Static Web Apps:"
+    echo "1. westus2 (West US 2)"
+    echo "2. centralus (Central US)"
+    echo "3. eastus2 (East US 2)"
+    echo "4. westeurope (West Europe)"
+    echo "5. eastasia (East Asia)"
+    echo ""
+    read -p "Select region (1-5) or enter custom region name: " choice
+    
+    case $choice in
+        1) LOCATION="westus2" ;;
+        2) LOCATION="centralus" ;;
+        3) LOCATION="eastus2" ;;
+        4) LOCATION="westeurope" ;;
+        5) LOCATION="eastasia" ;;
+        *) LOCATION="$choice" ;;
+    esac
+    
+    if [ -z "$LOCATION" ]; then
+        echo "❌ Error: Location is required. Exiting."
+        exit 1
+    fi
+fi
+
+echo "✅ Selected region: $LOCATION"
+
 # Check if user is logged in
 echo "Checking Azure authentication..."
 if ! az account show --output tsv >/dev/null 2>&1; then
@@ -220,7 +248,7 @@ if ! check_azure_resource "Microsoft.Resources/resourceGroups" "$RESOURCE_GROUP_
     exit 1
 fi
 
-# Create Cosmos DB account
+# Create Cosmos DB account (provisioned for free tier)
 echo "Creating Cosmos DB account: $COSMOS_ACCOUNT_NAME"
 az cosmosdb create --name "$COSMOS_ACCOUNT_NAME" --resource-group "$RESOURCE_GROUP_NAME" --locations regionName="$LOCATION"
 check_command "az cosmosdb create --name $COSMOS_ACCOUNT_NAME --resource-group $RESOURCE_GROUP_NAME --locations regionName=$LOCATION" "Failed to create Cosmos DB account"
@@ -400,6 +428,12 @@ echo "Function App: $FUNCTION_APP_NAME"
 echo "Static Web App: $STATIC_WEB_APP_NAME"
 echo "Cosmos DB: $COSMOS_ACCOUNT_NAME"
 echo "Storage Account: $STORAGE_ACCOUNT_NAME"
+echo ""
+echo "Free Tier Benefits:"
+echo "✓ Function App: 1M requests/month free"
+echo "✓ Cosmos DB: 25 RU/s + 25 GB storage/month free"
+echo "✓ Static Web App: 100 GB bandwidth/month free"
+echo "✓ Storage Account: 5 GB storage/month free"
 echo "========================================="
 echo "URLS:"
 if [ "$swa_url_valid" = true ]; then

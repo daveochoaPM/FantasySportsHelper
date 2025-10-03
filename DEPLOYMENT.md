@@ -108,7 +108,14 @@ Use the "Provision Infrastructure" workflow for one-time setup:
 ```bash
 # Set variables
 RESOURCE_GROUP="fantasyhelperrg"
-LOCATION="westus2"
+LOCATION=""  # Will prompt user to select from available regions
+
+# Available regions for Static Web Apps:
+# - westus2 (West US 2)
+# - centralus (Central US) 
+# - eastus2 (East US 2)
+# - westeurope (West Europe)
+# - eastasia (East Asia)
 
 # Create resource group
 az group create --name $RESOURCE_GROUP --location $LOCATION
@@ -120,19 +127,27 @@ az group create --name $RESOURCE_GROUP --location $LOCATION
 COSMOS_ACCOUNT="fantasyhelpercosmos"
 DATABASE_NAME="fantasy_helper"
 
-# Create Cosmos DB account
+# Create Cosmos DB account (provisioned for free tier)
 az cosmosdb create \
   --resource-group $RESOURCE_GROUP \
   --name $COSMOS_ACCOUNT \
   --kind GlobalDocumentDB \
-  --locations regionName=$LOCATION failoverPriority=0 isZoneRedundant=False \
-  --capabilities EnableServerless
+  --locations regionName=$LOCATION failoverPriority=0 isZoneRedundant=False
 
 # Create database
 az cosmosdb sql database create \
   --resource-group $RESOURCE_GROUP \
   --account-name $COSMOS_ACCOUNT \
   --name $DATABASE_NAME
+
+# Create container with provisioned throughput (qualifies for free tier)
+az cosmosdb sql container create \
+  --resource-group $RESOURCE_GROUP \
+  --account-name $COSMOS_ACCOUNT \
+  --database-name $DATABASE_NAME \
+  --name leagues \
+  --partition-key-path "/id" \
+  --throughput 400
 ```
 
 ### 1.3 Create Storage Account (for Function App)
@@ -500,14 +515,21 @@ az cosmosdb check-name-exists --name $COSMOS_ACCOUNT
 
 ## Cost Optimization
 
-### Estimated Monthly Costs (West US)
-- **Function App (Consumption)**: ~$5-20/month
-- **Cosmos DB (Serverless)**: ~$10-50/month  
-- **Static Web App**: Free tier
-- **Storage Account**: ~$1-5/month
-- **Application Insights**: ~$5-15/month
+### Estimated Monthly Costs (Free Tier Optimized)
+- **Function App (Consumption)**: Free tier (1M requests/month)
+- **Cosmos DB (Provisioned)**: Free tier (25 RU/s, 25 GB storage/month)
+- **Static Web App**: Free tier (100GB bandwidth/month)
+- **Storage Account**: Free tier (5GB/month)
+- **Key Vault**: Optional (disabled by default for free tier)
 
-**Total**: ~$20-90/month depending on usage
+**Total**: ~$0/month for small usage (100% free tier)
+
+### Free Tier Benefits
+- **Function App**: 1 million requests per month free
+- **Cosmos DB**: 25 RU/s throughput + 25 GB storage per month free
+- **Static Web App**: 100 GB bandwidth per month free
+- **Storage Account**: 5 GB storage per month free
+- **Key Vault**: Disabled by default (not free tier)
 
 ## Security Checklist
 

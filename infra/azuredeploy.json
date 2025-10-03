@@ -11,9 +11,16 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]",
+      "defaultValue": "westus2",
+      "allowedValues": [
+        "westus2",
+        "centralus", 
+        "eastus2",
+        "westeurope",
+        "eastasia"
+      ],
       "metadata": {
-        "description": "Location for all resources"
+        "description": "Location for all resources (must support Static Web Apps)"
       }
     },
     "cosmosDatabaseName": {
@@ -33,8 +40,9 @@
     },
     "aadTenantId": {
       "type": "string",
+      "defaultValue": "[subscription().tenantId]",
       "metadata": {
-        "description": "Azure AD Tenant ID for Static Web App authentication"
+        "description": "Azure AD Tenant ID for Static Web App authentication (auto-detected from current subscription)"
       }
     },
     "swaAppLocation": {
@@ -50,15 +58,21 @@
       "metadata": {
         "description": "Output location for Static Web App"
       }
+    },
+    "enableKeyVault": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Key Vault for secret management (not free tier)"
+      }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(parameters('namePrefix'), 'storage', uniqueString(resourceGroup().id))]",
-    "functionAppName": "[concat(parameters('namePrefix'), 'functions', uniqueString(resourceGroup().id))]",
-    "staticWebAppName": "[concat(parameters('namePrefix'), 'admin', uniqueString(resourceGroup().id))]",
-    "keyVaultName": "[concat(parameters('namePrefix'), 'kv', uniqueString(resourceGroup().id))]",
-    "cosmosAccountName": "[concat(parameters('namePrefix'), 'cosmos', uniqueString(resourceGroup().id))]",
-    "appInsightsName": "[concat(parameters('namePrefix'), 'insights', uniqueString(resourceGroup().id))]",
+    "storageAccountName": "[concat(take(parameters('namePrefix'), 8), 'stor', take(uniqueString(resourceGroup().id), 8))]",
+    "functionAppName": "[concat(take(parameters('namePrefix'), 8), 'func', take(uniqueString(resourceGroup().id), 8))]",
+    "staticWebAppName": "[concat(take(parameters('namePrefix'), 8), 'admin', take(uniqueString(resourceGroup().id), 8))]",
+    "keyVaultName": "[concat(take(parameters('namePrefix'), 8), 'kv', take(uniqueString(resourceGroup().id), 8))]",
+    "cosmosAccountName": "[concat(take(parameters('namePrefix'), 8), 'cosmos', take(uniqueString(resourceGroup().id), 8))]",
     "functionAppIdentity": "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
   },
   "resources": [
@@ -73,28 +87,12 @@
       "kind": "StorageV2"
     },
     {
-      "type": "Microsoft.Insights/components",
-      "apiVersion": "2020-02-02",
-      "name": "[variables('appInsightsName')]",
-      "location": "[parameters('location')]",
-      "kind": "web",
-      "properties": {
-        "Application_Type": "web",
-        "Request_Source": "rest"
-      }
-    },
-    {
       "type": "Microsoft.DocumentDB/databaseAccounts",
       "apiVersion": "2023-04-15",
       "name": "[variables('cosmosAccountName')]",
       "location": "[parameters('location')]",
       "kind": "GlobalDocumentDB",
       "properties": {
-        "capabilities": [
-          {
-            "name": "EnableServerless"
-          }
-        ],
         "locations": [
           {
             "locationName": "[parameters('location')]",
@@ -119,6 +117,35 @@
       }
     },
     {
+      "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+      "apiVersion": "2023-04-15",
+      "name": "[concat(variables('cosmosAccountName'), '/', parameters('cosmosDatabaseName'), '/leagues')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('cosmosAccountName'), parameters('cosmosDatabaseName'))]"
+      ],
+      "properties": {
+        "resource": {
+          "id": "leagues",
+          "partitionKey": {
+            "paths": ["/id"],
+            "kind": "Hash"
+          },
+          "indexingPolicy": {
+            "indexingMode": "consistent",
+            "includedPaths": [
+              {
+                "path": "/*"
+              }
+            ],
+            "excludedPaths": []
+          }
+        },
+        "options": {
+          "throughput": 400
+        }
+      }
+    },
+    {
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2023-02-01",
       "name": "[variables('keyVaultName')]",
@@ -131,7 +158,8 @@
         },
         "accessPolicies": [],
         "enableRbacAuthorization": true
-      }
+      },
+      "condition": "[parameters('enableKeyVault')]"
     },
     {
       "type": "Microsoft.Web/sites",
@@ -143,8 +171,7 @@
         "type": "SystemAssigned"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(variables('functionAppName'), 'Plan'))]",
@@ -176,14 +203,6 @@
               "value": "1"
             },
             {
-              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
-              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey]"
-            },
-            {
-              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
-              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).ConnectionString]"
-            },
-            {
               "name": "COSMOS_ENDPOINT",
               "value": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))).documentEndpoint]"
             },
@@ -197,11 +216,11 @@
             },
             {
               "name": "YAHOO_CLIENT_ID",
-              "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/YAHOO-CLIENT-ID/)')]"
+              "value": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/YAHOO-CLIENT-ID/)'), '')]"
             },
             {
               "name": "YAHOO_CLIENT_SECRET",
-              "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/YAHOO-CLIENT-SECRET/)')]"
+              "value": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/YAHOO-CLIENT-SECRET/)'), '')]"
             },
             {
               "name": "YAHOO_REDIRECT_URI",
@@ -209,11 +228,11 @@
             },
             {
               "name": "GOOGLE_CLIENT_ID",
-              "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/GOOGLE-CLIENT-ID/)')]"
+              "value": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/GOOGLE-CLIENT-ID/)'), '')]"
             },
             {
               "name": "GOOGLE_CLIENT_SECRET",
-              "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/GOOGLE-CLIENT-SECRET/)')]"
+              "value": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/GOOGLE-CLIENT-SECRET/)'), '')]"
             },
             {
               "name": "GMAIL_REDIRECT_URI",
@@ -221,7 +240,7 @@
             },
             {
               "name": "OPENAI_API_KEY",
-              "value": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/OPENAI-API-KEY/)')]"
+              "value": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/OPENAI-API-KEY/)'), '')]"
             }
           ]
         }
@@ -254,18 +273,16 @@
         "FUNCTIONS_EXTENSION_VERSION": "~4",
         "FUNCTIONS_WORKER_RUNTIME": "python",
         "WEBSITE_RUN_FROM_PACKAGE": "1",
-        "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey]",
-        "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).ConnectionString]",
         "COSMOS_ENDPOINT": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName'))).documentEndpoint]",
         "COSMOS_KEY": "[listKeys(resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosAccountName')), '2023-04-15').primaryMasterKey]",
         "COSMOS_DB": "[parameters('cosmosDatabaseName')]",
-        "YAHOO_CLIENT_ID": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/YAHOO-CLIENT-ID/)",
-        "YAHOO_CLIENT_SECRET": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/YAHOO-CLIENT-SECRET/)')]",
+        "YAHOO_CLIENT_ID": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/YAHOO-CLIENT-ID/)'), '')]",
+        "YAHOO_CLIENT_SECRET": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/YAHOO-CLIENT-SECRET/)'), '')]",
         "YAHOO_REDIRECT_URI": "[concat('https://', variables('functionAppName'), '.azurewebsites.net/api/auth/yahoo/callback')]",
-        "GOOGLE_CLIENT_ID": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/GOOGLE-CLIENT-ID/)')]",
-        "GOOGLE_CLIENT_SECRET": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/GOOGLE-CLIENT-SECRET/)')]",
+        "GOOGLE_CLIENT_ID": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/GOOGLE-CLIENT-ID/)'), '')]",
+        "GOOGLE_CLIENT_SECRET": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/GOOGLE-CLIENT-SECRET/)'), '')]",
         "GMAIL_REDIRECT_URI": "[concat('https://', variables('functionAppName'), '.azurewebsites.net/api/auth/google/callback')]",
-        "OPENAI_API_KEY": "[concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/OPENAI-API-KEY/)')]"
+        "OPENAI_API_KEY": "[if(parameters('enableKeyVault'), concat('@Microsoft.KeyVault(SecretUri=https://', variables('keyVaultName'), '.vault.azure.net/secrets/OPENAI-API-KEY/)'), '')]"
       }
     },
     {
@@ -280,7 +297,8 @@
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
         "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('functionAppName'))).identity.principalId]",
         "scope": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
-      }
+      },
+      "condition": "[parameters('enableKeyVault')]"
     },
     {
       "type": "Microsoft.Web/staticSites",

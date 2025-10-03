@@ -4,7 +4,7 @@
 param(
     [string]$SubscriptionId = "",
     [string]$ResourceGroupName = "fantasyhelperrg",
-    [string]$Location = "West US 2",
+    [string]$Location = "",
     [string]$FunctionAppName = "fantasyhelperfunc",
     [string]$StaticWebAppName = "fantasyhelperweb",
     [string]$CosmosAccountName = "fantasyhelpercosmos",
@@ -60,6 +60,34 @@ try {
     Write-Host "Please install Azure CLI from: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli" -ForegroundColor Yellow
     exit 1
 }
+
+# Validate and set location
+if ([string]::IsNullOrEmpty($Location)) {
+    Write-Host "Available regions for Static Web Apps:" -ForegroundColor Yellow
+    Write-Host "1. westus2 (West US 2)" -ForegroundColor White
+    Write-Host "2. centralus (Central US)" -ForegroundColor White
+    Write-Host "3. eastus2 (East US 2)" -ForegroundColor White
+    Write-Host "4. westeurope (West Europe)" -ForegroundColor White
+    Write-Host "5. eastasia (East Asia)" -ForegroundColor White
+    Write-Host ""
+    $choice = Read-Host "Select region (1-5) or enter custom region name"
+    
+    switch ($choice) {
+        "1" { $Location = "westus2" }
+        "2" { $Location = "centralus" }
+        "3" { $Location = "eastus2" }
+        "4" { $Location = "westeurope" }
+        "5" { $Location = "eastasia" }
+        default { $Location = $choice }
+    }
+    
+    if ([string]::IsNullOrEmpty($Location)) {
+        Write-Host "Error: Location is required. Exiting." -ForegroundColor Red
+        exit 1
+    }
+}
+
+Write-Host "Selected region: $Location" -ForegroundColor Green
 
 # Check if user is logged in
 Write-Host "Checking Azure authentication..." -ForegroundColor Yellow
@@ -189,7 +217,7 @@ if (-not (Test-AzureResource "Microsoft.Resources/resourceGroups" $ResourceGroup
     exit 1
 }
 
-# Create Cosmos DB account
+# Create Cosmos DB account (provisioned for free tier)
 Write-Host "Creating Cosmos DB account: $CosmosAccountName" -ForegroundColor Yellow
 az cosmosdb create --name $CosmosAccountName --resource-group $ResourceGroupName --locations regionName=$Location
 Test-CommandSuccess "az cosmosdb create --name $CosmosAccountName --resource-group $ResourceGroupName --locations regionName=$Location" "Failed to create Cosmos DB account"
@@ -399,6 +427,12 @@ Write-Host "Function App: $FunctionAppName" -ForegroundColor White
 Write-Host "Static Web App: $StaticWebAppName" -ForegroundColor White
 Write-Host "Cosmos DB: $CosmosAccountName" -ForegroundColor White
 Write-Host "Storage Account: $StorageAccountName" -ForegroundColor White
+Write-Host ""
+Write-Host "Free Tier Benefits:" -ForegroundColor Yellow
+Write-Host "✓ Function App: 1M requests/month free" -ForegroundColor Green
+Write-Host "✓ Cosmos DB: 25 RU/s + 25 GB storage/month free" -ForegroundColor Green
+Write-Host "✓ Static Web App: 100 GB bandwidth/month free" -ForegroundColor Green
+Write-Host "✓ Storage Account: 5 GB storage/month free" -ForegroundColor Green
 Write-Host "=========================================" -ForegroundColor Green
 Write-Host "URLS:" -ForegroundColor Yellow
 if ($swaUrlValid) {

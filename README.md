@@ -237,12 +237,19 @@ The scripts automatically create:
 3. **Deploy**: Static Web App automatically enforces security rules
 4. **Test**: Verify unauthorized users cannot access admin functions
 
-### Cost Estimation (West US 2)
-- **Function App (Consumption)**: ~$5-20/month
-- **Cosmos DB (Serverless)**: ~$10-50/month
-- **Static Web App**: Free tier
-- **Storage + Monitoring**: ~$5-15/month
-- **Total**: ~$20-90/month depending on usage
+### Cost Estimation (Free Tier Optimized)
+- **Function App (Consumption)**: Free tier (1M requests/month)
+- **Cosmos DB (Provisioned)**: Free tier (25 RU/s, 25 GB storage/month)
+- **Static Web App**: Free tier (100GB bandwidth/month)
+- **Storage Account**: Free tier (5GB/month)
+- **Key Vault**: Optional (disabled by default for free tier)
+- **Total**: ~$0/month for small usage (100% free tier)
+
+### Prerequisites
+- **Azure Subscription**: Required for deployment
+- **Quota Requirements**: Function App Consumption plan requires quota for Dynamic VMs
+  - If you get a quota error, request quota increase in Azure Portal
+  - Go to: Subscriptions → Your Subscription → Usage + quotas → Compute → Request quota increase
 
 ### Files Overview
 - `deploy.ps1` / `deploy.sh` — Automated Azure deployment scripts
